@@ -27,4 +27,9 @@ public class ProductApi {
         String response  = business.getProductById(id);
         return ResponseEntity.ok(response);
     }
+<<<<<<< HEAD
+=======
+
+
+>>>>>>> fffa9d7 (test 01)
 }
