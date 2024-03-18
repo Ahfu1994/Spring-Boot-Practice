@@ -8,7 +8,10 @@ import com.chiradet.training.backend.mapper.UserMapper;
 import com.chiradet.training.backend.model.MLoginRequest;
 import com.chiradet.training.backend.model.MRegisterRequest;
 import com.chiradet.training.backend.model.MRegisterResponse;
+import com.chiradet.training.backend.service.TokenService;
 import com.chiradet.training.backend.service.UserService;
+import com.chiradet.training.backend.util.SecurityUtil;
+import org.antlr.v4.runtime.Token;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -22,11 +25,14 @@ import java.util.Optional;
 public class UserBusiness {
 
     private final UserService userService;
+
+    private final TokenService tokenService;
     private final UserMapper userMapper;
 
 
-    public UserBusiness(UserService userService, UserMapper userMapper) {
+    public UserBusiness(UserService userService, TokenService tokenService, UserMapper userMapper) {
         this.userService = userService;
+        this.tokenService = tokenService;
         this.userMapper = userMapper;
     }
 
@@ -47,7 +53,7 @@ public class UserBusiness {
         }
 
         //TODO generate JWT
-        String token = "JWT TO DO";
+        String token = tokenService.tokenize(user);
 
         return token;
 
@@ -93,5 +99,22 @@ public class UserBusiness {
             throw new RuntimeException(e);
         }
         return "";
+    }
+
+    public String refreshToken() throws BaseException {
+        Optional<String> opt = SecurityUtil.getCurrentUserId();
+        if (opt.isEmpty()) {
+            throw UserException.unauthorized();
+        }
+
+        String userId = opt.get();
+
+        Optional<User> optUser = userService.findById(userId);
+        if (optUser.isEmpty()) {
+            throw UserException.notFound();
+        }
+
+        User user = optUser.get();
+        return tokenService.tokenize(user);
     }
 }
